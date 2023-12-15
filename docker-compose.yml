@@ -1,0 +1,166 @@
+version: "3.9"
+services:
+
+  Absence:
+    container_name: absence
+    image: "absencems"
+    build: 
+      context: absence-service
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/abmsdb?useUnicode=true&useJDBCCompliantTimezoneShift=true&createDatabaseIfNotExist=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+
+    depends_on:
+      - Eureka
+      - db-mysql
+
+  Inscription:
+    container_name: inscription
+    image: "inscriptionms"
+    build:
+      context: inscription-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://serviceregistry:8761/eureka/
+      - SPRING_DATA_MONGODB_HOST=db-mongo
+      - SPRING_DATA_MONGODB_PORT=27017
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - Eureka
+      - db-mongo
+
+  Reclamation:
+    container_name: reclamation
+    image: "reclamationms"
+    build:
+      context: reclamation-service
+      dockerfile: Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/MSProjectFinalReclamation?useUnicode=true&useJDBCCompliantTimezoneShift=true&createDatabaseIfNotExist=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    depends_on:
+      - Eureka
+      - db-mysql
+
+  planification:
+    container_name: planification
+    image: "planificationms"
+    build:
+      context: planification-service
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    depends_on:
+      - Eureka
+
+  cours:
+    container_name: cours
+    image: "coursms"
+    build:
+      context: cours-service
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8087"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    depends_on:
+      - Eureka
+
+  User:
+    container_name: user
+    image: "userms"
+    build:
+      context: User-service
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/USERdb?useUnicode=true&useJDBCCompliantTimezoneShift=true&createDatabaseIfNotExist=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    depends_on:
+      - Eureka
+      - db-mysql
+
+  Exam:
+    container_name: examen
+    image: "examenms"
+    build:
+      context: exam-service
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/examdb?createDatabaseIfNotExist=true&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+
+    depends_on:
+      - Eureka
+      - db-mysql
+
+  Eureka:
+    container_name: eureka
+    image: "eureka"
+    build:
+      context: Discovery-service
+      dockerfile: Dockerfile
+    hostname: serviceregistry
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      
+  db-mysql:
+    image: "mysql:5.6"
+    container_name: db-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysecretpassword
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+  db-mongo:
+    image: "mongo"
+    container_name: db-mongo
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+  Gateway:
+    container_name: gateway
+    image: "gatewayms"
+    build:
+      context: Api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    restart: unless-stopped
+    depends_on:
+      - Eureka
+      - keycloak
+
+  keycloak:
+    image: jboss/keycloak
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    ports:
+      - "8093:8093"
